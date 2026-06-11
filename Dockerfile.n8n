@@ -1,0 +1,25 @@
+# Dockerfile.n8n
+# Extends the official n8n image with kubectl for Kubernetes cluster operations.
+# kubectl is pinned to a stable version so builds are reproducible.
+
+FROM n8nio/n8n:latest
+
+# Switch to root to install system packages
+USER root
+
+# Install kubectl (pinned to v1.30.2 for reproducibility)
+ARG KUBECTL_VERSION=v1.30.2
+RUN apk add --no-cache curl ca-certificates \
+    && curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
+    && curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256" \
+    && echo "$(cat kubectl.sha256)  kubectl" | sha256sum -c \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/kubectl \
+    && rm kubectl.sha256 \
+    && kubectl version --client
+
+# Switch back to the non-root n8n user (required for security)
+USER node
+
+# Confirm kubectl is accessible as the node user
+RUN kubectl version --client
