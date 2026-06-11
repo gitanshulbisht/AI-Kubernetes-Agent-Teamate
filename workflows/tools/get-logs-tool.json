@@ -1,0 +1,43 @@
+{
+  "name": "K8s Tool: get_logs",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [{ "name": "pod_name" }, { "name": "namespace" }, { "name": "container_name" }]
+        }
+      },
+      "id": "trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "command": "=kubectl logs {{ $json.pod_name }} -n {{ $json.namespace }} {{ $json.container_name ? '-c ' + $json.container_name : '' }} --tail=100 2>&1"
+      },
+      "id": "kubectl-cmd",
+      "name": "kubectl logs",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "fields": { "values": [{ "name": "output", "stringValue": "={{ $json.stdout || $json.stderr }}" }] },
+        "options": {}
+      },
+      "id": "format-output",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [600, 300]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": { "main": [[{ "node": "kubectl logs", "type": "main", "index": 0 }]] },
+    "kubectl logs": { "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

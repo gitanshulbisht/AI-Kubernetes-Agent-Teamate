@@ -1,0 +1,281 @@
+{
+  "name": "AI Kubernetes Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "k8s-agent-chat"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "YOU ARE THE WORLD'S LEADING KUBERNETES ARCHITECT, PLATFORM ENGINEER, SITE RELIABILITY ENGINEER (SRE), AND CLOUD-NATIVE INFRASTRUCTURE EXPERT.\n\nYOUR KNOWLEDGE ENCOMPASSES:\n- Kubernetes Architecture: Control Plane, kubelet, kube-proxy, CNI, CSI, CRI\n- Workloads: Pods, Deployments, StatefulSets, DaemonSets, Jobs, CronJobs\n- Networking: Ingress, Gateway API, Service Mesh, DNS\n- Multi-Cluster Architectures, High Availability, Disaster Recovery\n- Security: RBAC, OPA, Kyverno, Pod Security Standards, Network Policies\n- GitOps: ArgoCD, Flux | IaC: Terraform, Pulumi\n- Observability: Prometheus, Grafana, OpenTelemetry\n- Cloud: AWS EKS, Azure AKS, GCP GKE\n- Operations: Incident Response, Upgrades, Capacity Planning, Cost Optimization\n\n---\n\n# CORE BEHAVIOR\n\nYOU MUST:\n- THINK LIKE A PRINCIPAL KUBERNETES ENGINEER\n- ANALYZE SYSTEMS HOLISTICALLY\n- EXPLAIN BOTH THEORY AND PRACTICAL IMPLEMENTATION\n- IDENTIFY ROOT CAUSES INSTEAD OF TREATING SYMPTOMS\n- PRIORITIZE RELIABILITY, SECURITY, SCALABILITY, AND MAINTAINABILITY\n- PROVIDE PRODUCTION-READY RECOMMENDATIONS\n- EXPLICITLY STATE ASSUMPTIONS WHEN INFORMATION IS MISSING\n- EVALUATE TRADE-OFFS BETWEEN MULTIPLE APPROACHES\n- EXPLAIN WHY A RECOMMENDATION IS PREFERRED\n- CONSIDER FAILURE MODES BEFORE FINALIZING RECOMMENDATIONS\n\n---\n\n# KUBECTL TOOLS AVAILABLE\n\nYou have access to these live cluster tools. ALWAYS call relevant tools FIRST to gather real cluster data before answering.\n\n| Tool | Description | Parameters |\n|------|-------------|------------|\n| get_pods | List all pods across all namespaces | none |\n| get_nodes | List all nodes with status | none |\n| describe_pod | Detailed pod info + events | pod_name, namespace |\n| get_logs | Last 100 log lines from a pod | pod_name, namespace, container_name (optional) |\n| get_deployments | List all deployments | none |\n| get_services | List all services | none |\n| get_namespaces | List all namespaces | none |\n| get_events | Recent cluster events sorted by time | none |\n| top_nodes | Node CPU/memory (needs metrics-server) | none |\n| top_pods | Pod CPU/memory (needs metrics-server) | none |\n| scale_deployment | Scale replicas — WRITE, CONFIRM FIRST | deployment_name, namespace, replicas |\n| restart_deployment | Rolling restart — WRITE, CONFIRM FIRST | deployment_name, namespace |\n| apply_manifest | Apply YAML — WRITE, CONFIRM FIRST | manifest_yaml |\n| exec_in_pod | Run command in pod | pod_name, namespace, command |\n\n---\n\n# WRITE OPERATION SAFETY RULE\n\nBEFORE calling scale_deployment, restart_deployment, or apply_manifest:\n1. Show the user the EXACT kubectl command that will run\n2. Ask: 'Do you want me to proceed? (yes/no)'\n3. Only call the tool after receiving explicit 'yes'\n\n---\n\n# CHAIN OF THOUGHT FRAMEWORK\n\nFor every task, follow this reasoning process:\n1. UNDERSTAND — identify objective, task type (troubleshoot / design / security / ops)\n2. GATHER DATA — call relevant kubectl tools to get live cluster state\n3. ANALYZE — identify risks, bottlenecks, failure domains, misconfigurations\n4. BUILD SOLUTION — configuration, operations, security\n5. CONSIDER EDGE CASES — node failures, AZ failures, resource exhaustion\n\n---\n\n# OUTPUT FORMAT\n\nAlways structure responses as:\n\n### Executive Summary\n[Concise conclusion]\n\n### Live Cluster Data\n[Relevant data from kubectl tool calls — include raw output]\n\n### Root Cause Analysis\n[For troubleshooting: systematic root cause identification]\n\n### Recommended Solution\n[Detailed explanation with reasoning and trade-offs]\n\n### Implementation Steps\n[Numbered, step-by-step kubectl commands]\n\n### Example Configurations\n[Production-ready YAML manifests when applicable]\n\n### Risks and Trade-Offs\n[Pros/cons of the recommended approach]\n\n### Validation Checklist\n[Steps to verify the fix or implementation worked]\n\n---\n\n# WHAT NOT TO DO\n\nNEVER:\n- Guess facts without stating assumptions\n- Recommend deprecated Kubernetes APIs\n- Ignore security implications\n- Ignore failure scenarios\n- Provide invalid YAML\n- Give answers without explaining reasoning\n- Prioritize convenience over production reliability\n- Recommend changes without explaining risk"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Kubernetes Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "model": "={{ $env.OLLAMA_MODEL || 'llama3.1:8b' }}",
+        "options": {
+          "baseURL": "={{ $env.OLLAMA_BASE_URL || 'http://ollama:11434' }}"
+        }
+      },
+      "id": "ollama-model",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [300, 520]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "fromInput",
+        "windowSize": 20
+      },
+      "id": "memory",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [520, 520]
+    },
+    {
+      "parameters": {
+        "name": "get_pods",
+        "description": "List all pods across all namespaces. Returns pod names, namespaces, status (Running/Pending/CrashLoopBackOff etc), restart counts, and age. Use this to get a workload overview or find pods with issues.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_PODS_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-pods",
+      "name": "Tool: get_pods",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [740, 520]
+    },
+    {
+      "parameters": {
+        "name": "get_nodes",
+        "description": "List all Kubernetes nodes with their status, roles, age, and Kubernetes version. Use to check node health, capacity, and whether any nodes are NotReady.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_NODES_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-nodes",
+      "name": "Tool: get_nodes",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [960, 520]
+    },
+    {
+      "parameters": {
+        "name": "describe_pod",
+        "description": "Get detailed information about a specific pod: events, conditions, container states, resource requests/limits, volume mounts, scheduling info. Requires: pod_name (string), namespace (string).",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_DESCRIBE_POD_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-describe-pod",
+      "name": "Tool: describe_pod",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [1180, 520]
+    },
+    {
+      "parameters": {
+        "name": "get_logs",
+        "description": "Get the last 100 lines of logs from a pod container. Requires: pod_name (string), namespace (string). Optional: container_name (string, needed for multi-container pods).",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_LOGS_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-logs",
+      "name": "Tool: get_logs",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [740, 720]
+    },
+    {
+      "parameters": {
+        "name": "get_deployments",
+        "description": "List all Kubernetes Deployments across all namespaces. Shows desired/ready/available replica counts, container images, and age.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_DEPLOYMENTS_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-deployments",
+      "name": "Tool: get_deployments",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [960, 720]
+    },
+    {
+      "parameters": {
+        "name": "get_services",
+        "description": "List all Kubernetes Services across all namespaces. Shows service type (ClusterIP/NodePort/LoadBalancer), ports, and external IPs.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_SERVICES_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-services",
+      "name": "Tool: get_services",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [1180, 720]
+    },
+    {
+      "parameters": {
+        "name": "get_namespaces",
+        "description": "List all Kubernetes namespaces with their status and age.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_NAMESPACES_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-namespaces",
+      "name": "Tool: get_namespaces",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [740, 920]
+    },
+    {
+      "parameters": {
+        "name": "get_events",
+        "description": "Get recent cluster events sorted by time (newest first). Shows Warnings, scheduling failures, OOMKills, image pull errors, and other critical events. Best first tool to call when diagnosing issues.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_GET_EVENTS_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-get-events",
+      "name": "Tool: get_events",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [960, 920]
+    },
+    {
+      "parameters": {
+        "name": "top_nodes",
+        "description": "Show real-time CPU and memory usage for all cluster nodes. Requires metrics-server to be installed. Use to identify nodes under resource pressure.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_TOP_NODES_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-top-nodes",
+      "name": "Tool: top_nodes",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [1180, 920]
+    },
+    {
+      "parameters": {
+        "name": "top_pods",
+        "description": "Show real-time CPU and memory usage for all pods across all namespaces. Requires metrics-server. Use to find resource-hungry pods or validate resource limits.",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_TOP_PODS_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-top-pods",
+      "name": "Tool: top_pods",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [740, 1120]
+    },
+    {
+      "parameters": {
+        "name": "scale_deployment",
+        "description": "WRITE OPERATION — always show the user the command and ask for explicit confirmation before calling. Scale a Kubernetes Deployment to a specified number of replicas. Requires: deployment_name (string), namespace (string), replicas (number).",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_SCALE_DEPLOYMENT_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-scale-deployment",
+      "name": "Tool: scale_deployment",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [960, 1120]
+    },
+    {
+      "parameters": {
+        "name": "restart_deployment",
+        "description": "WRITE OPERATION — always confirm with user before calling. Perform a rolling restart of a Kubernetes Deployment (all pods are replaced gracefully). Requires: deployment_name (string), namespace (string).",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_RESTART_DEPLOYMENT_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-restart-deployment",
+      "name": "Tool: restart_deployment",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [1180, 1120]
+    },
+    {
+      "parameters": {
+        "name": "apply_manifest",
+        "description": "WRITE OPERATION — always show the full manifest to the user and ask for explicit confirmation before calling. Apply a Kubernetes YAML manifest to the cluster using kubectl apply. Requires: manifest_yaml (string containing valid YAML).",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_APPLY_MANIFEST_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-apply-manifest",
+      "name": "Tool: apply_manifest",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [740, 1320]
+    },
+    {
+      "parameters": {
+        "name": "exec_in_pod",
+        "description": "Execute a diagnostic shell command inside a running pod. Use for checking file contents, testing DNS resolution, checking network connectivity. Requires: pod_name (string), namespace (string), command (string, e.g. 'cat /etc/resolv.conf' or 'nslookup kubernetes.default').",
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_EXEC_IN_POD_WORKFLOW_ID", "mode": "id" }
+      },
+      "id": "tool-exec-in-pod",
+      "name": "Tool: exec_in_pod",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [960, 1320]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [[{ "node": "AI Kubernetes Agent", "type": "main", "index": 0 }]]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Kubernetes Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [[{ "node": "AI Kubernetes Agent", "type": "ai_memory", "index": 0 }]]
+    },
+    "Tool: get_pods": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_nodes": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: describe_pod": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_logs": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_deployments": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_services": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_namespaces": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: get_events": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: top_nodes": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: top_pods": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: scale_deployment": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: restart_deployment": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: apply_manifest": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "Tool: exec_in_pod": {
+      "ai_tool": [[{ "node": "AI Kubernetes Agent", "type": "ai_tool", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}

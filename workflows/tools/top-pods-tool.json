@@ -1,0 +1,10 @@
+{
+  "name": "K8s Tool: top_pods",
+  "nodes": [
+    { "parameters": { "workflowInputs": { "values": [] } }, "id": "trigger", "name": "Execute Workflow Trigger", "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1, "position": [0, 300] },
+    { "parameters": { "command": "kubectl top pods -A 2>&1" }, "id": "kubectl-cmd", "name": "kubectl top pods", "type": "n8n-nodes-base.executeCommand", "typeVersion": 1, "position": [300, 300] },
+    { "parameters": { "fields": { "values": [{ "name": "output", "stringValue": "={{ $json.stdout || $json.stderr }}" }] }, "options": {} }, "id": "format-output", "name": "Format Output", "type": "n8n-nodes-base.set", "typeVersion": 3, "position": [600, 300] }
+  ],
+  "connections": { "Execute Workflow Trigger": { "main": [[{ "node": "kubectl top pods", "type": "main", "index": 0 }]] }, "kubectl top pods": { "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1" }
+}
