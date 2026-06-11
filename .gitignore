@@ -1,0 +1,15 @@
+# Environment
+.env
+
+# n8n and Ollama data volumes
+n8n_data/
+ollama_data/
+
+# OS
+.DS_Store
+*.swp
+Thumbs.db
+
+# kubeconfig copies (never commit credentials)
+kubeconfig
+*.kubeconfig
