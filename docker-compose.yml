@@ -1,0 +1,94 @@
+# docker-compose.yml
+# AI Kubernetes Agent Teammate Stack
+# Services: n8n (with kubectl) + Ollama (LLM inference)
+#
+# Usage:
+#   cp .env.example .env && nano .env   # configure first
+#   docker compose up -d --build        # start the stack
+#   docker compose exec ollama ollama pull llama3.1:8b  # pull model on first run
+
+version: '3.8'
+
+networks:
+  k8s-agent-net:
+    driver: bridge
+    # Isolated network — Ollama is not exposed externally
+
+volumes:
+  n8n_data:
+    driver: local
+    # Stores n8n workflows, credentials, execution history
+  ollama_data:
+    driver: local
+    # Stores downloaded LLM model weights
+
+services:
+
+  # ─── Ollama: Local LLM Inference Server ──────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: k8s-agent-ollama
+    restart: unless-stopped
+    networks:
+      - k8s-agent-net
+    volumes:
+      - ollama_data:/root/.ollama
+    # ── NVIDIA GPU Support (uncomment if you have a GPU) ──────────────────
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ─── n8n: AI Workflow Engine + Agent ─────────────────────────────────────
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.n8n
+    image: k8s-agent-n8n:latest
+    container_name: k8s-agent-n8n
+    restart: unless-stopped
+    networks:
+      - k8s-agent-net
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic auth for the web UI
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-true}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      # Host and protocol settings
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
+      # Timezone
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-UTC}
+      - TZ=${TZ:-UTC}
+      # Ollama endpoint — uses internal Docker network name, NOT localhost
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      # kubeconfig path inside the container (always at this fixed path)
+      - KUBECONFIG=/home/node/.kube/config
+    volumes:
+      # Persist n8n data (workflows, credentials, execution history)
+      - n8n_data:/home/node/.n8n
+      # Mount host kubeconfig read-only — NEVER write access to credentials
+      - ${KUBECONFIG_HOST_PATH:-~/.kube/config}:/home/node/.kube/config:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
