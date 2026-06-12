@@ -1,0 +1,240 @@
+{
+  "updatedAt": "2026-06-11T09:32:29.743Z",
+  "createdAt": "2026-06-11T09:32:29.743Z",
+  "id": "vn9PhyQSbjdtgHol",
+  "name": "Chat dd268792-911c-4ccc-ae9e-c412eebcad13",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -448,
+        -112
+      ],
+      "id": "5b6fe17b-a2fd-4538-a767-ffc4e29ff907",
+      "name": "When chat message received",
+      "webhookId": "6f49a039-1dc1-432a-8860-92e1ba32cc79"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "enableStreaming": true,
+          "systemMessage": "You are a helpful assistant.\n\n\n# Current Date and Time\n\nThe user's current local date and time is: 2026-06-11T15:02:29.720+05:30 (timezone: Asia/Calcutta).\nWhen you need to reference \"now\", use this date and time.\n\n# Output Capabilities\n\n## Multimedia Generation\n\nYou are allowed to describe, explain and analyze provided multimedia data if you're capable of, but not allowed to create, generate, edit, or display images, videos, or other non-text content.\nIf the user asks you to generate or edit an image (or other media), explain that you are not able to do that and, if helpful, describe in words what the image could look like or how they could create it using external tools.\n\n## Document Generation\n\nYou can create and edit documents for the user using special XML-like commands. When you use these commands, documents appear in a side panel next to this chat where users can view them in real-time. You can create multiple documents in a conversation, and users can switch between them using a dropdown selector.\n\nWrite these commands DIRECTLY in your response - do NOT wrap them in code fences or backticks.\n\n### Creating a Document\n\nTo create a new document, include this command directly in your response:\n\n<command:artifact-create>\n<title>Document Title</title>\n<type>md</type>\n<content>\nDocument content here...\n</content>\n</command:artifact-create>\n\nThe type can be:\n- html for HTML documents\n- md for Markdown documents\n- A code language like typescript, python, json, etc. for code files\n\nExample response:\n\"I'll create an RFC document for you.\n\n<command:artifact-create>\n<title>RFC: New Feature</title>\n<type>md</type>\n<content>\n# RFC: New Feature\n\n## Summary\nThis feature will...\n</content>\n</command:artifact-create>\n\nI've created the RFC above. Let me know if you'd like any changes!\"\n\n### Editing a Document\n\nTo make targeted edits to a document, you must specify the exact title of the document you want to edit:\n\n<command:artifact-edit>\n<title>Document Title</title>\n<oldString>text to find</oldString>\n<newString>replacement text</newString>\n<replaceAll>false</replaceAll>\n</command:artifact-edit>\n\n- <title> is required and must match the exact title of an existing document.\n- Set replaceAll to true to replace all occurrences, or false to replace only the first occurrence.\n- If the document title doesn't exist, the edit command will be ignored.\n\nIMPORTANT:\n- Write these commands directly in your response text, NOT inside code blocks or fences.\n- ALWAYS include conversational text before and/or after document commands. Never send a message with only commands and no explanation.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        608,
+        0
+      ],
+      "id": "95677d36-be3e-4381-9187-92742feda2be",
+      "name": "AI Agent"
+    },
+    {
+      "position": [
+        608,
+        304
+      ],
+      "id": "d3659612-1b8f-4b8d-8faf-4a030b8c6ea1",
+      "name": "Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "akufEsaBKCp430Od",
+          "name": ""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        304
+      ],
+      "id": "bccae640-4b8a-4bcb-b284-a578ff67dcd9",
+      "name": "Memory"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "insertMode": "override",
+        "messages": {
+          "messageValues": []
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        -192,
+        48
+      ],
+      "id": "65edfca4-e7ee-4f5b-b558-4c410cc44dd4",
+      "name": "Restore Chat Memory"
+    },
+    {
+      "parameters": {
+        "mode": "delete",
+        "deleteMode": "all"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        0
+      ],
+      "id": "ff7ac6c5-1dc6-475f-b9c0-fa9a63f0c8e4",
+      "name": "Clear Chat Memory"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "chatInput",
+        "joinMode": "enrichInput1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "bc9c6faa-47f5-4bdb-bae2-dd4b0dc57845",
+      "name": "Merge"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Restore Chat Memory",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Chat Memory": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Restore Chat Memory",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Clear Chat Memory",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Clear Chat Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "50908559-d17c-4027-aa91-103dde6fee6f",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-06-11T09:32:29.748Z",
+      "createdAt": "2026-06-11T09:32:29.748Z",
+      "role": "workflow:owner",
+      "workflowId": "vn9PhyQSbjdtgHol",
+      "projectId": "j0RPT4rXjGeYyfmF",
+      "project": {
+        "updatedAt": "2026-06-11T07:08:09.641Z",
+        "createdAt": "2026-06-11T06:58:13.523Z",
+        "id": "j0RPT4rXjGeYyfmF",
+        "name": "Anshul Bisht <anshul123bisht@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "98ea874b-1bc5-483a-9947-8726c8708b95"
+      }
+    }
+  ],
+  "versionMetadata": null
+}

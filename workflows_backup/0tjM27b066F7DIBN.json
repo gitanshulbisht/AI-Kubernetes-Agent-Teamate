@@ -1,0 +1,119 @@
+{
+  "updatedAt": "2026-06-11T08:25:58.087Z",
+  "createdAt": "2026-06-11T08:25:56.244Z",
+  "id": "0tjM27b066F7DIBN",
+  "name": "K8s Tool: get_namespaces",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "93ba8f22-8cb8-440b-b36c-a24d56523d0a",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "kubectl get namespaces 2>&1"
+      },
+      "id": "b3eb2396-94c2-40cc-83fe-1ce01dcf36f8",
+      "name": "kubectl get namespaces",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        304,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "output",
+              "stringValue": "={{ $json.stdout || $json.stderr }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2cd55075-ac71-422c-bee6-c7c3f6835d66",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        608,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "kubectl get namespaces",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "kubectl get namespaces": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "ef5ad409-f452-4a92-a596-fa6fb77496d8",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-06-11T08:25:56.246Z",
+      "createdAt": "2026-06-11T08:25:56.246Z",
+      "role": "workflow:owner",
+      "workflowId": "0tjM27b066F7DIBN",
+      "projectId": "j0RPT4rXjGeYyfmF",
+      "project": {
+        "updatedAt": "2026-06-11T07:08:09.641Z",
+        "createdAt": "2026-06-11T06:58:13.523Z",
+        "id": "j0RPT4rXjGeYyfmF",
+        "name": "Anshul Bisht <anshul123bisht@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "98ea874b-1bc5-483a-9947-8726c8708b95"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

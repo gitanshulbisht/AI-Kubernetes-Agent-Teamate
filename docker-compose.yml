@@ -18,35 +18,10 @@ volumes:
   n8n_data:
     driver: local
     # Stores n8n workflows, credentials, execution history
-  ollama_data:
-    driver: local
-    # Stores downloaded LLM model weights
 
 services:
 
-  # ─── Ollama: Local LLM Inference Server ──────────────────────────────────
-  ollama:
-    image: ollama/ollama:latest
-    container_name: k8s-agent-ollama
-    restart: unless-stopped
-    networks:
-      - k8s-agent-net
-    volumes:
-      - ollama_data:/root/.ollama
-    # ── NVIDIA GPU Support (uncomment if you have a GPU) ──────────────────
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+
 
   # ─── n8n: AI Workflow Engine + Agent ─────────────────────────────────────
   n8n:
@@ -73,9 +48,11 @@ services:
       # Timezone
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-UTC}
       - TZ=${TZ:-UTC}
-      # Ollama endpoint — uses internal Docker network name, NOT localhost
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      # Enable the Execute Command node (disabled by default in n8n v2.0+)
+      - NODES_EXCLUDE=[]
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # NVIDIA NIM (OpenAI-compatible endpoint) configuration
+      - OPENAI_API_BASE=https://integrate.api.nvidia.com/v1
       # kubeconfig path inside the container (always at this fixed path)
       - KUBECONFIG=/home/node/.kube/config
     volumes:
@@ -83,11 +60,9 @@ services:
       - n8n_data:/home/node/.n8n
       # Mount host kubeconfig read-only — NEVER write access to credentials
       - ${KUBECONFIG_HOST_PATH:-~/.kube/config}:/home/node/.kube/config:ro
-    depends_on:
-      ollama:
-        condition: service_healthy
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

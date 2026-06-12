@@ -48,7 +48,7 @@ info "n8n image built ✓"
 info "Starting Ollama..."
 docker compose up -d ollama
 info "Waiting for Ollama to be healthy..."
-until docker compose exec ollama curl -sf http://localhost:11434/api/version >/dev/null 2>&1; do
+until docker compose exec ollama ollama list >/dev/null 2>&1; do
   sleep 5; echo -n "."
 done
 echo ""; info "Ollama ready ✓"
@@ -63,7 +63,7 @@ info "Model $MODEL ready ✓"
 info "Starting n8n..."
 docker compose up -d n8n
 info "Waiting for n8n..."
-until docker compose exec n8n curl -sf http://localhost:5678/healthz >/dev/null 2>&1; do
+until docker compose exec n8n wget -qO- http://localhost:5678/healthz >/dev/null 2>&1; do
   sleep 5; echo -n "."
 done
 echo ""; info "n8n ready ✓"
