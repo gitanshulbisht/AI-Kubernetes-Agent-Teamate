@@ -61,6 +61,7 @@ Then open `http://localhost:5678` and follow the **Workflow Import Guide** below
 ![Chat 1](images/chat1.png)
 ![Chat 2](images/chat2.png)
 ![Chat 3](images/chat3.png)
+![Chat 4](images/chat4.png)
 
 ---
 
