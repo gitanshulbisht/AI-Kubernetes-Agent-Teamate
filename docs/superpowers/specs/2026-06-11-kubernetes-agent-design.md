@@ -29,13 +29,13 @@ A self-hosted AI Kubernetes agent that acts as a principal-level SRE/Platform en
 │                   Docker Compose Host                    │
 │                                                         │
 │  ┌──────────────────┐    ┌──────────────────────────┐  │
-│  │      n8n          │    │         Ollama            │  │
-│  │  (port 5678)     │◄──►│  (port 11434)            │  │
-│  │                  │    │  Model: llama3.1:70b      │  │
+│  │      n8n          │    │      OpenRouter /        │  │
+│  │  (port 5678)     │◄──►│      NVIDIA NIM          │  │
+│  │  v1.123.55       │    │  Model: Llama 3 70B+     │  │
 │  │  ┌────────────┐  │    └──────────────────────────┘  │
 │  │  │ AI Agent   │  │                                   │
 │  │  │   Node     │  │    ┌──────────────────────────┐  │
-│  │  └─────┬──────┘  │    │   ~/.kube/config         │  │
+│  │  └─────┬──────┘  │    │   internal-kubeconfig    │  │
 │  │        │ Tools   │    │   (mounted into n8n)     │  │
 │  │  ┌─────▼──────┐  │    └──────────────────────────┘  │
 │  │  │ kubectl    │  │                                   │
@@ -45,15 +45,16 @@ A self-hosted AI Kubernetes agent that acts as a principal-level SRE/Platform en
 └─────────────────────────────────────────────────────────┘
           │
           ▼
-  Kubernetes Cluster (remote or local)
+  Kubernetes Cluster (remote or local via host.docker.internal)
 ```
 
 ### Key Design Decisions
 
-- **n8n runs outside the cluster** (Docker Compose on Linux/Mac host) — separation of concerns, multi-cluster capable
-- **Ollama is fully self-hosted and free** — no API costs, runs 24/7
-- **kubectl binary installed inside n8n's container** via custom Dockerfile
-- **kubeconfig mounted read-only** into n8n container for security
+- **n8n runs outside the cluster** (Docker Compose on Linux/Mac host) — separation of concerns, multi-cluster capable.
+- **n8n Version pinned to v1.123.55** — prevents Langchain URL validation bugs found in n8n v2.x.
+- **Cloud LLM (OpenRouter)** — local Ollama (Llama 3 8B) struggled with Langchain's complex JSON tool schemas. We offloaded to a powerful 70B+ model.
+- **kubectl binary installed inside n8n's container** via custom Dockerfile.
+- **kubeconfig mounted read-only** into n8n container for security.
 
 ---
 
@@ -62,21 +63,18 @@ A self-hosted AI Kubernetes agent that acts as a principal-level SRE/Platform en
 ### 1. Docker Compose Stack
 
 **Services:**
-- `n8n` — custom image extending `n8nio/n8n` with `kubectl` binary added
-- `ollama` — LLM inference server with GPU passthrough (CPU fallback)
+- `n8n` — custom image extending `n8nio/n8n:1.123.55` with `kubectl` binary added.
 
 **Volumes:**
 - `n8n_data` — persistent n8n data (workflows, credentials, executions)
-- `ollama_data` — downloaded model weights
 
 **Networking:**
-- Both services on an internal bridge network (`k8s-agent-net`)
 - n8n exposed on `0.0.0.0:5678`
-- Ollama internal-only (not exposed externally)
+- Modified `kubeconfig` uses `host.docker.internal` (for macOS/Windows users) to route `kubectl` commands from inside the container back to the host's local cluster (e.g., kind, Docker Desktop).
 
 ### 2. Custom n8n Dockerfile
 
-Extends `n8nio/n8n:latest` with:
+Extends `n8nio/n8n:1.123.55` with:
 - `kubectl` binary (pinned to a specific version)
 - `curl` for health checks
 - Non-root user preserved
@@ -86,7 +84,7 @@ Extends `n8nio/n8n:latest` with:
 The core workflow (exported as JSON for easy import) includes:
 
 **Trigger:** Chat Message Received  
-**Agent:** AI Agent Node with Ollama Chat Model  
+**Agent:** AI Agent Node with OpenRouter Chat Model  
 **Memory:** Window Buffer Memory (last 20 messages for context)  
 **System Prompt:** Full Kubernetes expert system prompt (see below)
 
@@ -94,13 +92,13 @@ The core workflow (exported as JSON for easy import) includes:
 
 | Tool Name | Command | Type |
 |---|---|---|
-| `get_pods` | `kubectl get pods -A -o json` | Read |
-| `get_nodes` | `kubectl get nodes -o json` | Read |
+| `get_pods` | `kubectl get pods -A -o wide` | Read |
+| `get_nodes` | `kubectl get nodes -o wide` | Read |
 | `describe_pod` | `kubectl describe pod {name} -n {namespace}` | Read |
 | `get_logs` | `kubectl logs {pod} -n {namespace} --tail=100` | Read |
-| `get_deployments` | `kubectl get deployments -A -o json` | Read |
-| `get_services` | `kubectl get services -A -o json` | Read |
-| `get_namespaces` | `kubectl get namespaces -o json` | Read |
+| `get_deployments` | `kubectl get deployments -A -o wide` | Read |
+| `get_services` | `kubectl get services -A -o wide` | Read |
+| `get_namespaces` | `kubectl get namespaces` | Read |
 | `get_events` | `kubectl get events -A --sort-by=.metadata.creationTimestamp` | Read |
 | `top_nodes` | `kubectl top nodes` | Read |
 | `top_pods` | `kubectl top pods -A` | Read |
@@ -111,7 +109,7 @@ The core workflow (exported as JSON for easy import) includes:
 
 ### 4. System Prompt
 
-The world-leading Kubernetes architect system prompt (as provided by user) injected into the AI Agent node. Covers:
+The world-leading Kubernetes architect system prompt covers:
 - Kubernetes architecture expertise
 - Chain-of-thought troubleshooting framework
 - YAML generation rules
@@ -123,10 +121,10 @@ The world-leading Kubernetes architect system prompt (as provided by user) injec
 
 1. User types question in n8n chat
 2. AI Agent receives message with full expert system prompt
-3. Ollama (Llama 3.1) generates plan and decides which tools to invoke
+3. OpenRouter (Llama 3 70B+) generates plan and decides which tools to invoke
 4. Tool nodes execute `kubectl` commands via `Execute Command` node
-5. Results returned to Ollama as tool call outputs
-6. Ollama synthesizes production-grade response
+5. Results returned to OpenRouter as tool call outputs
+6. OpenRouter synthesizes production-grade response
 7. Response displayed in n8n chat
 
 ---
@@ -139,51 +137,16 @@ The world-leading Kubernetes architect system prompt (as provided by user) injec
 | Permission denied (RBAC) | Agent explains RBAC issue and suggests remediation |
 | Write operations | Agent shows exact command, asks "Confirm? (yes/no)" before executing |
 | Delete/drain operations | Explicit double-confirmation required |
-| Ollama model not loaded | n8n retries, returns error message to user |
-| kubectl timeout | Returns partial data with timeout warning |
+| Mac Docker Loopback | `internal-kubeconfig.yaml` points to `host.docker.internal` instead of `127.0.0.1` with `insecure-skip-tls-verify: true` |
 
 ---
 
 ## Security Model
 
 - kubeconfig mounted **read-only** (`ro` flag in Docker Compose)
-- kubeconfig stored as n8n credential (not hardcoded in workflow)
 - Write operations require chat confirmation before execution
 - All executed commands appear in n8n execution log (audit trail)
-- Ollama not exposed outside Docker network (no external API access)
 - n8n protected by basic auth (username/password set via env vars)
-
----
-
-## File Structure
-
-```
-AI-Kubernetes-Agent-Teamate/
-├── docker-compose.yml          # Main stack definition
-├── Dockerfile.n8n              # Custom n8n image with kubectl
-├── .env.example                # Environment variable template
-├── .env                        # Local config (gitignored)
-├── workflows/
-│   └── k8s-agent-workflow.json # n8n workflow export (importable)
-├── scripts/
-│   └── setup.sh                # One-command setup script
-├── docs/
-│   └── superpowers/specs/
-│       └── 2026-06-11-kubernetes-agent-design.md
-└── README.md                   # Setup and usage guide
-```
-
----
-
-## Verification Plan
-
-1. `docker compose up -d` starts both services successfully
-2. Ollama downloads and serves the Llama 3.1 model
-3. n8n chat UI accessible at http://localhost:5678
-4. Agent responds to "List all pods in all namespaces"
-5. Agent correctly identifies pod issues in a test scenario
-6. Write operation (scale deployment) triggers confirmation prompt
-7. n8n execution history shows kubectl commands that were run
 
 ---
 
