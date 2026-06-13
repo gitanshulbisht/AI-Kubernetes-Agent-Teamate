@@ -3,7 +3,7 @@
 A self-hosted AI agent that acts as your principal-level Kubernetes SRE teammate.
 Ask questions about your cluster, get expert troubleshooting guidance, and issue operational commands — all via chat.
 
-**Stack:** n8n (v1.123) + OpenRouter (Nemotron/Llama 3) + kubectl | Dockerized | 14 Custom Tools
+**Stack:** n8n (v1.123) + Groq (Llama 3.3 70B) + kubectl | Dockerized | 14 Custom Tools
 
 ---
 
@@ -14,7 +14,7 @@ Ask questions about your cluster, get expert troubleshooting guidance, and issue
 | Docker Desktop ≥ 4.x | https://docs.docker.com/get-docker/ |
 | Docker Compose v2 | Bundled with Docker Desktop |
 | Kubernetes cluster | Local (kind/minikube) or remote |
-| OpenRouter Account | Free or Paid API key (or Groq/NVIDIA NIM) |
+| Groq Account | Free API key |
 
 ---
 
@@ -51,6 +51,16 @@ Then open `http://localhost:5678` and follow the **Workflow Import Guide** below
 8. For tools that take parameters (like `describe_pod` and `get_logs`), open the tool, click "Add Value" under **Extra Workflow Inputs**, and click the ✨ icon to map `pod_name` and `namespace`.
 9. **Activate** the AI Kubernetes Agent workflow.
 10. Click the **chat bubble icon** (bottom-left) to open the chat interface!
+
+## Screenshots
+
+### The n8n Workflow with 14 Tools
+![n8n Workflow](images/workflow.png)
+
+### The Agent In Action
+![Chat 1](images/chat1.png)
+![Chat 2](images/chat2.png)
+![Chat 3](images/chat3.png)
 
 ---
 
@@ -101,7 +111,7 @@ The agent can autonomously call these tools to gather context before answering y
 Docker Compose Host
 ├── n8n :5678 (v1.123)        ← Custom image (n8n + kubectl baked in)
 │   ├── AI Agent              ← Orchestrates LLM + tool calls
-│   ├── OpenRouter Chat Model ← Connects to Nemotron/Llama 3 APIs
+│   ├── Groq Chat Model       ← Connects to Llama-3.3-70b-versatile
 │   ├── Memory                ← Conversation window
 │   └── 14 Tools              ← Execute Command nodes (runs kubectl)
 
