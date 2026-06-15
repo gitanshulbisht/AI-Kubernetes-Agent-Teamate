@@ -47,4 +47,15 @@ Our final hurdle was n8n's UI quirks for passing LLM arguments (like `pod_name` 
 ## The Result
 The agent sprang to life. It successfully analyzed the raw output of `kubectl get pods -A`, filtered out the noise, identified 3 failing pods in CrashLoopBackOff, and formatted a beautiful executive summary with recommended next steps.
 
-We built a 14-tool, 550-billion parameter, fully autonomous Kubernetes SRE teammate!
+## Phase 6: Telegram Mobile Integration & Cloudflare Tunnels
+To make the agent truly act like a teammate, we integrated it with Telegram so the user could debug clusters directly from their phone.
+1. **The Webhook Tunnel**: We set up a `cloudflared` Quick Tunnel to expose the local n8n instance to the internet securely.
+2. **The Markdown Parsing Crash**: The agent generated highly detailed markdown (bolding, code blocks). However, because Telegram restricts messages to 4096 characters, long outputs were getting sliced right in the middle of markdown entities, completely crashing Telegram's strict parser (`Can't find end of the entity`).
+3. **The Nuclear Sanitizer**: We built a custom Javascript node to dynamically split messages at 3900 characters and forcefully strip problematic markdown characters (`*`, `_`, `<none>`) while preserving the structure. This guaranteed 100% stable delivery to the mobile app.
+
+## Phase 7: The Self-Healing Cluster Demonstration
+With the Telegram integration complete, we put the agent to the ultimate test using a deliberately broken cluster.
+1. **Tool Refactoring**: We discovered that the `apply_manifest` tool failed because piping JSON-stringified YAML into `kubectl` via `printf` caused newline formatting errors. We refactored it to use a bulletproof bash "Here-Doc" (`<< 'EOF'`).
+2. **The Autonomous Fix**: The user challenged the agent with an `oom-killed-demo` pod. The agent intelligently read the raw python command `python -c "a = []; while True: a.append(' '*10**6)"` and realized it was a deliberate memory leak. It stated that simply increasing memory limits was a band-aid, rewrote the deployment YAML to use a safe `time.sleep()` loop, and utilized the `apply_manifest` tool to autonomously push the permanent fix to the cluster.
+
+We built a 14-tool, OpenRouter-powered (n2 pro), fully autonomous Kubernetes SRE teammate that lives on your phone!

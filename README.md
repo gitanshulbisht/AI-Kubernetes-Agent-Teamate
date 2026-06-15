@@ -3,7 +3,7 @@
 A self-hosted AI agent that acts as your principal-level Kubernetes SRE teammate.
 Ask questions about your cluster, get expert troubleshooting guidance, and issue operational commands — all via chat.
 
-**Stack:** n8n (v1.123) + Groq (Llama 3.3 70B) + kubectl | Dockerized | 14 Custom Tools
+**Stack:** n8n (v1.123) + OpenRouter (n2 pro) + kubectl | Dockerized | Telegram Integration | 14 Custom Tools
 
 ---
 
@@ -35,6 +35,13 @@ docker compose up -d --build
 
 Then open `http://localhost:5678` and follow the **Workflow Import Guide** below.
 
+### Exposing for Telegram (Optional)
+If you want to use the Telegram bot integration, run a Cloudflare tunnel to expose your local n8n securely:
+```bash
+cloudflared tunnel --url http://localhost:5678
+```
+Copy the `https://*.trycloudflare.com` URL into your `.env` file as `WEBHOOK_URL` and restart the n8n container (`docker compose up -d`).
+
 ---
 
 ## Workflow Import Guide
@@ -48,9 +55,11 @@ Then open `http://localhost:5678` and follow the **Workflow Import Guide** below
 5. Import `workflows/k8s-agent-workflow.json` (the main agent).
 6. Open the **AI Kubernetes Agent** workflow.
 7. For each of the 14 Tool nodes, click the node and update the **Workflow ID** field from the dropdown list to match the imported sub-workflow.
-8. For tools that take parameters (like `describe_pod` and `get_logs`), open the tool, click "Add Value" under **Extra Workflow Inputs**, and click the ✨ icon to map `pod_name` and `namespace`.
+8. For tools that take parameters (like `describe_pod` and `get_logs`), open the tool, click "Add Value" under **Extra Workflow Inputs**, and map `pod_name` and `namespace`. You MUST also set the **Schema Type** to "Generate From JSON Example" and provide a valid JSON example (e.g. `{"pod_name": "test", "namespace": "default"}`).
 9. **Activate** the AI Kubernetes Agent workflow.
 10. Click the **chat bubble icon** (bottom-left) to open the chat interface!
+
+> 📱 **Note for Telegram:** To use the bot on your phone, import `workflows/telegram-agent-workflow-v2.json` instead of the web chat workflow. Configure your Telegram credentials in the nodes, and ensure the "Split Message" Javascript sanitizer is active to prevent Telegram API parsing errors!
 
 ## Screenshots
 
