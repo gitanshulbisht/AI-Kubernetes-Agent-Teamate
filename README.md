@@ -3,7 +3,7 @@
 A self-hosted AI agent that acts as your principal-level Kubernetes SRE teammate.
 Ask questions about your cluster, get expert troubleshooting guidance, and issue operational commands — all via chat.
 
-**Stack:** n8n (v1.123) + OpenRouter (n2 pro) + kubectl | Dockerized | Telegram Integration | 14 Custom Tools
+**Stack:** n8n (v1.123) + OpenRouter (n2 pro) + kubectl | Dockerized | Telegram Integration | 20 Custom Tools
 
 ---
 
@@ -50,11 +50,11 @@ Copy the `https://*.trycloudflare.com` URL into your `.env` file as `WEBHOOK_URL
 
 1. Open `http://localhost:5678` and create your owner account.
 2. Go to **Workflows → ⊕ Add Workflow → Import from File**
-3. Import **all 14 tool files** from `workflows/` one at a time.
+3. Import **all 20 tool files** from `workflows/` one at a time.
 4. **Activate** each tool workflow (toggle switch in top-right of each workflow).
 5. Import `workflows/k8s-agent-workflow.json` (the main agent).
 6. Open the **AI Kubernetes Agent** workflow.
-7. For each of the 14 Tool nodes, click the node and update the **Workflow ID** field from the dropdown list to match the imported sub-workflow.
+7. For each of the 20 Tool nodes, click the node and update the **Workflow ID** field from the dropdown list to match the imported sub-workflow.
 8. For tools that take parameters (like `describe_pod` and `get_logs`), open the tool, click "Add Value" under **Extra Workflow Inputs**, and map `pod_name` and `namespace`. You MUST also set the **Schema Type** to "Generate From JSON Example" and provide a valid JSON example (e.g. `{"pod_name": "test", "namespace": "default"}`).
 9. **Activate** the AI Kubernetes Agent workflow.
 10. Click the **chat bubble icon** (bottom-left) to open the chat interface!
@@ -63,7 +63,7 @@ Copy the `https://*.trycloudflare.com` URL into your `.env` file as `WEBHOOK_URL
 
 ## Screenshots
 
-### The n8n Workflow with 14 Tools
+### The n8n Workflow with 20 Tools
 ![n8n Workflow](images/workflow.png)
 
 ### The Agent In Action
@@ -99,16 +99,22 @@ The agent can autonomously call these tools to gather context before answering y
 | `get_pods` | Read | All pods across namespaces |
 | `get_nodes` | Read | Nodes with status |
 | `describe_pod` | Read | Detailed pod info + events |
+| `describe_resource` | Read | Describe generic resources (services, ingresses, etc) |
 | `get_logs` | Read | Last 100 log lines |
 | `get_deployments` | Read | All deployments |
 | `get_services` | Read | All services |
 | `get_namespaces` | Read | All namespaces |
 | `get_events` | Read | Cluster events (newest first) |
+| `get_ingresses` | Read | List Ingresses in a namespace |
+| `get_configmaps_secrets`| Read | List ConfigMaps and Secrets in a namespace |
 | `top_nodes` | Read | Node CPU/memory |
 | `top_pods` | Read | Pod CPU/memory |
+| `patch_resource` | **Write** ⚠️ | Apply a JSON strategic patch to any resource |
 | `scale_deployment` | **Write** ⚠️ | Scale deployment replicas |
 | `restart_deployment` | **Write** ⚠️ | Rolling restart a deployment |
+| `rollout_undo` | **Write** ⚠️ | Revert a deployment to previous revision |
 | `apply_manifest` | **Write** ⚠️ | Apply a YAML manifest |
+| `delete_resource` | **Write** ⚠️ | Delete a resource entirely |
 | `exec_in_pod` | Read/Write | Run diagnostic command in pod |
 
 > ⚠️ **Safety mechanism:** For all Write operations, the agent is strictly instructed to show you the exact command it plans to run and ask for your explicit confirmation ("yes") before executing it.
@@ -123,7 +129,7 @@ Docker Compose Host
 │   ├── AI Agent              ← Orchestrates LLM + tool calls
 │   ├── Groq Chat Model       ← Connects to Llama-3.3-70b-versatile
 │   ├── Memory                ← Conversation window
-│   └── 14 Tools              ← Execute Command nodes (runs kubectl)
+│   └── 20 Tools              ← Execute Command nodes (runs kubectl)
 
 ~/.kube/config ── mounted read-only ──→ n8n ── kubectl ──→ Kubernetes Cluster
 ```

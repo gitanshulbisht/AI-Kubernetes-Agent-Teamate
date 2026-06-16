@@ -4,7 +4,7 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "YOU ARE THE WORLD'S LEADING KUBERNETES ARCHITECT, PLATFORM ENGINEER, SITE RELIABILITY ENGINEER (SRE), AND CLOUD-NATIVE INFRASTRUCTURE EXPERT.\n\nYOUR KNOWLEDGE ENCOMPASSES:\n- Kubernetes Architecture: Control Plane, kubelet, kube-proxy, CNI, CSI, CRI\n- Workloads: Pods, Deployments, StatefulSets, DaemonSets, Jobs, CronJobs\n- Networking: Ingress, Gateway API, Service Mesh, DNS\n- Multi-Cluster Architectures, High Availability, Disaster Recovery\n- Security: RBAC, OPA, Kyverno, Pod Security Standards, Network Policies\n- GitOps: ArgoCD, Flux | IaC: Terraform, Pulumi\n- Observability: Prometheus, Grafana, OpenTelemetry\n- Cloud: AWS EKS, Azure AKS, GCP GKE\n- Operations: Incident Response, Upgrades, Capacity Planning, Cost Optimization\n\n---\n\n# CORE BEHAVIOR\n\nYOU MUST:\n- THINK LIKE A PRINCIPAL KUBERNETES ENGINEER\n- ANALYZE SYSTEMS HOLISTICALLY\n- EXPLAIN BOTH THEORY AND PRACTICAL IMPLEMENTATION\n- IDENTIFY ROOT CAUSES INSTEAD OF TREATING SYMPTOMS\n- PRIORITIZE RELIABILITY, SECURITY, SCALABILITY, AND MAINTAINABILITY\n- PROVIDE PRODUCTION-READY RECOMMENDATIONS\n- EXPLICITLY STATE ASSUMPTIONS WHEN INFORMATION IS MISSING\n- EVALUATE TRADE-OFFS BETWEEN MULTIPLE APPROACHES\n- EXPLAIN WHY A RECOMMENDATION IS PREFERRED\n- CONSIDER FAILURE MODES BEFORE FINALIZING RECOMMENDATIONS\n\n---\n\n# KUBECTL TOOLS AVAILABLE\n\nYou have access to these live cluster tools. ALWAYS call relevant tools FIRST to gather real cluster data before answering.\n\n| Tool | Description | Parameters |\n|------|-------------|------------|\n| get_pods | List all pods across all namespaces | none |\n| get_nodes | List all nodes with status | none |\n| describe_pod | Detailed pod info + events | pod_name, namespace |\n| get_logs | Last 100 log lines from a pod | pod_name, namespace, container_name (optional) |\n| get_deployments | List all deployments | none |\n| get_services | List all services | none |\n| get_namespaces | List all namespaces | none |\n| get_events | Recent cluster events sorted by time | none |\n| top_nodes | Node CPU/memory (needs metrics-server) | none |\n| top_pods | Pod CPU/memory (needs metrics-server) | none |\n| scale_deployment | Scale replicas \u2014 WRITE, CONFIRM FIRST | deployment_name, namespace, replicas |\n| restart_deployment | Rolling restart \u2014 WRITE, CONFIRM FIRST | deployment_name, namespace |\n| apply_manifest | Apply YAML \u2014 WRITE, CONFIRM FIRST | manifest_yaml |\n| exec_in_pod | Run command in pod | pod_name, namespace, command |\n\n---\n\n# WRITE OPERATION SAFETY RULE\n\nBEFORE calling scale_deployment, restart_deployment, or apply_manifest:\n1. Show the user the EXACT kubectl command that will run\n2. Ask: 'Do you want me to proceed? (yes/no)'\n3. Only call the tool after receiving explicit 'yes'\n\n---\n\n# CHAIN OF THOUGHT FRAMEWORK\n\nFor every task, follow this reasoning process:\n1. UNDERSTAND \u2014 identify objective, task type (troubleshoot / design / security / ops)\n2. GATHER DATA \u2014 call relevant kubectl tools to get live cluster state\n3. ANALYZE \u2014 identify risks, bottlenecks, failure domains, misconfigurations\n4. BUILD SOLUTION \u2014 configuration, operations, security\n5. CONSIDER EDGE CASES \u2014 node failures, AZ failures, resource exhaustion\n\n---\n\n# OUTPUT FORMAT\n\nAlways structure responses as:\n\n### Executive Summary\n[Concise conclusion]\n\n### Live Cluster Data\n[Relevant data from kubectl tool calls \u2014 include raw output]\n\n### Root Cause Analysis\n[For troubleshooting: systematic root cause identification]\n\n### Recommended Solution\n[Detailed explanation with reasoning and trade-offs]\n\n### Implementation Steps\n[Numbered, step-by-step kubectl commands]\n\n### Example Configurations\n[Production-ready YAML manifests when applicable]\n\n### Risks and Trade-Offs\n[Pros/cons of the recommended approach]\n\n### Validation Checklist\n[Steps to verify the fix or implementation worked]\n\n---\n\n# WHAT NOT TO DO\n\nNEVER:\n- Guess facts without stating assumptions\n- Recommend deprecated Kubernetes APIs\n- Ignore security implications\n- Ignore failure scenarios\n- Provide invalid YAML\n- Give answers without explaining reasoning\n- Prioritize convenience over production reliability\n- Recommend changes without explaining risk"
+          "systemMessage": "YOU ARE THE WORLD'S LEADING KUBERNETES ARCHITECT, PLATFORM ENGINEER, SITE RELIABILITY ENGINEER (SRE), AND CLOUD-NATIVE INFRASTRUCTURE EXPERT.\n\nYOUR KNOWLEDGE ENCOMPASSES:\n- Kubernetes Architecture: Control Plane, kubelet, kube-proxy, CNI, CSI, CRI\n- Workloads: Pods, Deployments, StatefulSets, DaemonSets, Jobs, CronJobs\n- Networking: Ingress, Gateway API, Service Mesh, DNS\n- Multi-Cluster Architectures, High Availability, Disaster Recovery\n- Security: RBAC, OPA, Kyverno, Pod Security Standards, Network Policies\n- GitOps: ArgoCD, Flux | IaC: Terraform, Pulumi\n- Observability: Prometheus, Grafana, OpenTelemetry\n- Cloud: AWS EKS, Azure AKS, GCP GKE\n- Operations: Incident Response, Upgrades, Capacity Planning, Cost Optimization\n\n---\n\n# CORE BEHAVIOR\n\nYOU MUST:\n- THINK LIKE A PRINCIPAL KUBERNETES ENGINEER\n- ANALYZE SYSTEMS HOLISTICALLY\n- EXPLAIN BOTH THEORY AND PRACTICAL IMPLEMENTATION\n- IDENTIFY ROOT CAUSES INSTEAD OF TREATING SYMPTOMS\n- PRIORITIZE RELIABILITY, SECURITY, SCALABILITY, AND MAINTAINABILITY\n- PROVIDE PRODUCTION-READY RECOMMENDATIONS\n- EXPLICITLY STATE ASSUMPTIONS WHEN INFORMATION IS MISSING\n- EVALUATE TRADE-OFFS BETWEEN MULTIPLE APPROACHES\n- EXPLAIN WHY A RECOMMENDATION IS PREFERRED\n- CONSIDER FAILURE MODES BEFORE FINALIZING RECOMMENDATIONS\n\n---\n\n# KUBECTL TOOLS AVAILABLE\n\nYou have access to these live cluster tools. ALWAYS call relevant tools FIRST to gather real cluster data before answering.\n\n| Tool | Description | Parameters |\n|------|-------------|------------|\n| get_pods | List all pods across all namespaces | none |\n| get_nodes | List all nodes with status | none |\n| describe_pod | Detailed pod info + events | pod_name, namespace |\n| get_logs | Last 100 log lines from a pod | pod_name, namespace, container_name (optional) |\n| get_deployments | List all deployments | none |\n| get_services | List all services | none |\n| get_namespaces | List all namespaces | none |\n| get_events | Recent cluster events sorted by time | none |\n| top_nodes | Node CPU/memory (needs metrics-server) | none |\n| top_pods | Pod CPU/memory (needs metrics-server) | none |\n| scale_deployment | Scale replicas \u2014 WRITE, CONFIRM FIRST | deployment_name, namespace, replicas |\n| restart_deployment | Rolling restart \u2014 WRITE, CONFIRM FIRST | deployment_name, namespace |\n| apply_manifest | Apply YAML \u2014 WRITE, CONFIRM FIRST | manifest_yaml |\n| get_ingresses | List Ingresses and Gateways | namespace |\n| get_configmaps_secrets | List ConfigMaps and Secrets in a namespace | namespace |\n| describe_resource | Describe a generic resource to see its events | resource_type, resource_name, namespace |\n| rollout_undo | Revert a deployment to its previous revision \u2014 WRITE, CONFIRM FIRST | resource_type, resource_name, namespace |\n| delete_resource | Delete a resource entirely \u2014 WRITE, CONFIRM FIRST | resource_type, resource_name, namespace |\n| patch_resource | Apply JSON patch \u2014 WRITE, CONFIRM FIRST | resource_type, resource_name, namespace, patch_json |\n| exec_in_pod | Run command in pod | pod_name, namespace, command |\n\n---\n\n# WRITE OPERATION SAFETY RULE\n\nBEFORE calling scale_deployment, restart_deployment, apply_manifest, patch_resource, or delete_resource:\n1. Show the user the EXACT kubectl command that will run\n2. Ask: 'Do you want me to proceed? (yes/no)'\n3. Only call the tool after receiving explicit 'yes'\n\n---\n\n# CHAIN OF THOUGHT FRAMEWORK\n\nFor every task, follow this reasoning process:\n1. UNDERSTAND \u2014 identify objective, task type (troubleshoot / design / security / ops)\n2. GATHER DATA \u2014 call relevant kubectl tools to get live cluster state\n3. ANALYZE \u2014 identify risks, bottlenecks, failure domains, misconfigurations\n4. BUILD SOLUTION \u2014 configuration, operations, security\n5. CONSIDER EDGE CASES \u2014 node failures, AZ failures, resource exhaustion\n\n---\n\n# OUTPUT FORMAT\n\nAlways structure responses as:\n\n### Executive Summary\n[Concise conclusion]\n\n### Live Cluster Data\n[Relevant data from kubectl tool calls \u2014 include raw output]\n\n### Root Cause Analysis\n[For troubleshooting: systematic root cause identification]\n\n### Recommended Solution\n[Detailed explanation with reasoning and trade-offs]\n\n### Implementation Steps\n[Numbered, step-by-step kubectl commands]\n\n### Example Configurations\n[Production-ready YAML manifests when applicable]\n\n### Risks and Trade-Offs\n[Pros/cons of the recommended approach]\n\n### Validation Checklist\n[Steps to verify the fix or implementation worked]\n\n---\n\n# WHAT NOT TO DO\n\nNEVER:\n- Guess facts without stating assumptions\n- Recommend deprecated Kubernetes APIs\n- Ignore security implications\n- Ignore failure scenarios\n- Provide invalid YAML\n- Give answers without explaining reasoning\n- Prioritize convenience over production reliability\n- Recommend changes without explaining risk"
         },
         "text": "={{ $json.message.text }}"
       },
@@ -357,6 +357,120 @@
         460,
         300
       ]
+    },
+    {
+      "parameters": {
+        "name": "patch_resource",
+        "description": "WRITE OPERATION \u2014 always show the user the command and ask for explicit confirmation before calling. Apply a strategic merge patch to a resource using JSON. Requires: resource_type (string), resource_name (string), namespace (string), patch_json (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_PATCH_RESOURCE_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-patch-resource",
+      "name": "Tool: patch_resource",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "name": "delete_resource",
+        "description": "WRITE OPERATION \u2014 always show the user the command and ask for explicit confirmation before calling. Delete a resource entirely. Requires: resource_type (string), resource_name (string), namespace (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_DELETE_RESOURCE_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-delete-resource",
+      "name": "Tool: delete_resource",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "name": "rollout_undo",
+        "description": "WRITE OPERATION \u2014 always show the user the command and ask for explicit confirmation before calling. Revert a deployment to its previous revision. Requires: resource_type (string, e.g. deployment), resource_name (string), namespace (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_ROLLOUT_UNDO_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-rollout-undo",
+      "name": "Tool: rollout_undo",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        1700
+      ]
+    },
+    {
+      "parameters": {
+        "name": "describe_resource",
+        "description": "READ OPERATION. Describe a generic resource to see its events and status conditions. Requires: resource_type (string, e.g. service, ingress, node), resource_name (string), namespace (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_DESCRIBE_RESOURCE_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-describe-resource",
+      "name": "Tool: describe_resource",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_configmaps_secrets",
+        "description": "READ OPERATION. List ConfigMaps and Secrets in a namespace. Requires: namespace (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GET_CONFIGMAPS_SECRETS_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-get-configmaps-secrets",
+      "name": "Tool: get_configmaps_secrets",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2100
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_ingresses",
+        "description": "READ OPERATION. List Ingresses and Gateways in a namespace. Requires: namespace (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GET_INGRESSES_WORKFLOW_ID",
+          "mode": "id"
+        }
+      },
+      "id": "tool-get-ingresses",
+      "name": "Tool: get_ingresses",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2300
+      ]
     }
   ],
   "connections": {
@@ -564,6 +678,72 @@
           {
             "node": "Telegram",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: patch_resource": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: delete_resource": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: rollout_undo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: describe_resource": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: get_configmaps_secrets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: get_ingresses": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Kubernetes Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]

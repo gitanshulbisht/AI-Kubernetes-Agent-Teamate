@@ -8,7 +8,7 @@ Our goal was to build a secure, locally-hosted AI agent capable of interrogating
 1. **n8n**: The core workflow and orchestration engine.
 2. **Kubectl Integration**: A custom Dockerfile to install `kubectl` into the n8n container.
 3. **LLM Engine**: Initially planned as a local Ollama instance, then shifted to cloud providers for better tool-calling capabilities.
-4. **Tools Agent**: Utilizing n8n's Advanced AI nodes to parse LLM intent and trigger 14 custom-built sub-workflows executing specific `kubectl` commands.
+4. **Tools Agent**: Utilizing n8n's Advanced AI nodes to parse LLM intent and trigger 20 custom-built sub-workflows executing specific `kubectl` commands.
 
 ## Phase 2: The Initial Build and Docker Woes
 
@@ -58,4 +58,10 @@ With the Telegram integration complete, we put the agent to the ultimate test us
 1. **Tool Refactoring**: We discovered that the `apply_manifest` tool failed because piping JSON-stringified YAML into `kubectl` via `printf` caused newline formatting errors. We refactored it to use a bulletproof bash "Here-Doc" (`<< 'EOF'`).
 2. **The Autonomous Fix**: The user challenged the agent with an `oom-killed-demo` pod. The agent intelligently read the raw python command `python -c "a = []; while True: a.append(' '*10**6)"` and realized it was a deliberate memory leak. It stated that simply increasing memory limits was a band-aid, rewrote the deployment YAML to use a safe `time.sleep()` loop, and utilized the `apply_manifest` tool to autonomously push the permanent fix to the cluster.
 
-We built a 14-tool, OpenRouter-powered (n2 pro), fully autonomous Kubernetes SRE teammate that lives on your phone!
+## Phase 8: Expanding the Arsenal
+To make the agent truly invincible, we expanded its capabilities from 14 to 20 tools.
+1. **The JSON Patch Challenge**: We built a `patch_resource` tool. Initially, we faced issues with complex JSON schemas. We resolved this by using a robust Bash Here-Doc (`<< 'EOF'`) to safely inject the JSON payload into a temporary file before applying the strategic merge patch.
+2. **The Missing Namespace Bug**: When building the `describe_resource` and `get_ingresses` tools, we discovered that if the AI omitted the namespace, the bash command `kubectl describe -n 2>&1` would crash. We fixed this by adding ternary logic (`{{ $json.namespace ? '-n ' + $json.namespace : '' }}`) to gracefully fallback to all namespaces or the default namespace.
+3. **The Rollout Undo Testing**: We implemented a `rollout_undo` tool. During testing, the AI intelligently refused to rollback a deployment because it noticed there was only 1 revision! We had to manually inject an environment variable using `kubectl set env` to force Kubernetes to create a Revision 2, proving the AI's contextual awareness and the flawless execution of the rollback.
+
+We built a 20-tool, OpenRouter-powered (n2 pro), fully autonomous Kubernetes SRE teammate that lives on your phone!
